@@ -2,7 +2,11 @@ package Teste;
 
 import java.awt.BorderLayout;
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
@@ -15,10 +19,11 @@ import com.freire.tools.ExportaDicom;
 public class DicomTeste {
 	
 	private static JFrame fatherFrame;
+	private static String dcmPath = "C:/Users/Otávio/Desktop/DICOM/1.2.410.200048.36260.20151105081113.1.1.1.dcm";
 
 	public static void main(String[] args) throws IOException {
 		JOptionPane.showMessageDialog(fatherFrame, "Carregando arquivo DICOM.", "Carregando dcm...", JOptionPane.WARNING_MESSAGE);
-		ExportaDicom expDicom = new ExportaDicom("C:/1.2.410.200048.36260.20151105081113.1.1.1.dcm");
+		ExportaDicom expDicom = new ExportaDicom(dcmPath);
 		JOptionPane.showMessageDialog(fatherFrame, "Exportando arquivos XML e JPEG.", "Exportando...", JOptionPane.WARNING_MESSAGE);
 		expDicom.export2Xml();
 		expDicom.export2Jpg();
@@ -49,6 +54,14 @@ public class DicomTeste {
 												   JOptionPane.WARNING_MESSAGE);
 		
 		fatherFrame.dispose();
+		
+		//Testando o retorno do método ByteArray
+		OutputStream fos = new FileOutputStream(new File(dcmPath.replace("dcm", "txt")));
+		ByteArrayOutputStream baos = new ByteArrayOutputStream(expDicom.getDicomImageByteArray().length);
+		baos.write(expDicom.getDicomImageByteArray());
+		baos.writeTo(fos);
+		baos.close();
+		fos.close();		
 	}
 
 }

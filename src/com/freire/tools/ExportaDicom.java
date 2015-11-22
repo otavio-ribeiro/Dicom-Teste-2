@@ -100,15 +100,12 @@ public class ExportaDicom {
 	}
 	
 	public void export2Jpg(){
-
-		ImageIO.scanForPlugins();
-		Iterator<ImageReader> iter = ImageIO.getImageReadersByFormatName("DICOM");
-		ImageReader imgReader = (ImageReader) iter.next();
-		
-
-		DicomImageReadParam param = (DicomImageReadParam) imgReader.getDefaultReadParam();
-		
 		try {
+			ImageIO.scanForPlugins();
+			Iterator<ImageReader> iter = ImageIO.getImageReadersByFormatName("DICOM");
+			ImageReader imgReader = (ImageReader) iter.next();
+			
+			DicomImageReadParam param = (DicomImageReadParam) imgReader.getDefaultReadParam();
 
 			ImageInputStream iis;
 			if(this.dcmFile == null) {
@@ -120,21 +117,20 @@ public class ExportaDicom {
 			imgReader.setInput(iis, false);
 			BufferedImage bfImg = imgReader.read(0, param);
 
-			iis.close();
-
 			if(bfImg == null) {
 				System.out.println("Arquivo vazio ou inexistente.");
 				return;
 			}
 
-//			File jpgImgFile = new File(this.savePath.concat(".jpg"));
-//
-//			OutputStream output = new BufferedOutputStream(new FileOutputStream(jpgImgFile));
-//
-//			ImageIO.write(bfImg, "jpeg", output);
-			ImageIO.write(bfImg, "jpeg", new File(this.savePath.concat(".jpg")));
+			File jpgImgFile = new File(this.savePath.concat(".jpg"));
 
-			//output.close();		
+			OutputStream output = new BufferedOutputStream(new FileOutputStream(jpgImgFile));
+
+			ImageIO.write(bfImg, "jpeg", output);
+
+			//Fechamento dos streams
+			iis.close();
+			output.close();		
 		}catch(IOException e) {
 			e.printStackTrace(); 
 			return;
@@ -196,12 +192,12 @@ public class ExportaDicom {
 	}
 	
 	public byte[] getDicomImageByteArray() {				
-		ImageIO.scanForPlugins();
-		Iterator<ImageReader> iter = ImageIO.getImageReadersByFormatName("DICOM");
-		ImageReader imgReader = (ImageReader) iter.next();	
-		DicomImageReadParam param = (DicomImageReadParam) imgReader.getDefaultReadParam();
-				
 		try {
+			ImageIO.scanForPlugins();
+			Iterator<ImageReader> iter = ImageIO.getImageReadersByFormatName("DICOM");
+			ImageReader imgReader = (ImageReader) iter.next();	
+			DicomImageReadParam param = (DicomImageReadParam) imgReader.getDefaultReadParam();
+			
 			ImageInputStream iis;
 			
 			if(this.dcmFile == null) {
@@ -213,6 +209,7 @@ public class ExportaDicom {
 			imgReader.setInput(iis, false);
 			ByteArrayOutputStream baos = new ByteArrayOutputStream();
 			ImageIO.write(imgReader.read(0, param), "jpeg", baos);
+			baos.flush(); //TROCAR A POSICAO DO FLUSH CASO NAO ESTEJA DANDO CERTO
 			byte[] imageInBytes = baos.toByteArray();
 			baos.close();
 			iis.close();
