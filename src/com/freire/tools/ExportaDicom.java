@@ -5,6 +5,7 @@ import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -21,7 +22,7 @@ import org.dcm4che2.data.Tag;
 //import org.dcm4che2.imageio.plugins.dcm.DicomImageReadParam;
 import org.dcm4che2.io.DicomInputStream;
 import org.dcm4che2.tool.dcm2xml.Dcm2Xml;
-import org.dcm4che3.imageio.plugins.dcm.DicomImageReadParam;;
+import org.dcm4che3.imageio.plugins.dcm.DicomImageReadParam;
 
 public class ExportaDicom {
 	
@@ -31,11 +32,11 @@ public class ExportaDicom {
 	private File dcmFile;
 	private String[] dcmData;
 	
-	public ExportaDicom(byte[] dcmByteArray) {
+	public ExportaDicom(byte[] dcmByteArray, String savePath) {
 		setDicomArq(dcmByteArray);
 		setDicomObject(this.dcmArq);
 		setSavePath(this.dcmObj.getString(Tag.SOPInstanceUID));
-		this.dcmFile = null;
+		setDcmFile(dcmByteArray, "dcmTempFile.dcm");
 		carregaDadosDicom();
 	}
 	
@@ -87,10 +88,24 @@ public class ExportaDicom {
 		this.savePath = savePath;
 	}
 	
+	private void setDcmFile(byte[] dcmByteArray, String dcmFilePath) {
+		try {
+			this.dcmFile = new File(dcmFilePath);
+			OutputStream fos = new FileOutputStream(this.dcmFile);
+			fos.write(dcmByteArray, 0, dcmByteArray.length);
+			fos.close();
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}	
+	}
+	
 	
 	public void export2Xml() {
-		Dcm2Xml xmlFile = new Dcm2Xml();
+		
 		try{
+			Dcm2Xml xmlFile = new Dcm2Xml();
 			xmlFile.convert(this.dcmFile, new File(this.savePath.concat(".xml")));
 		}catch(IOException e) {
 			return;
