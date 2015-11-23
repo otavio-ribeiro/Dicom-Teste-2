@@ -2,6 +2,7 @@ package com.freire.tools;
 
 import java.awt.image.BufferedImage;
 import java.io.BufferedOutputStream;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -25,18 +26,18 @@ public class DicomUtils {
 	
 	private File dcmFile;
 	private DicomObject dcmObj;
-	private String savePath;
+
 	
 	public DicomUtils(byte[] dcmByteArray, String savePath) {
-		setDcmFile(dcmByteArray, savePath);
-		this.savePath = savePath;
-		setDcmObject();
+		setDcmObject(dcmByteArray);
+		setDcmFile(dcmByteArray, savePath.concat(this.dcmObj.getString(Tag.SOPInstanceUID)+".dcm"));
+		this.dcmFile.deleteOnExit();
 	}
 	
 	public DicomUtils(String dcmFilePath, String savePath) {
 		this.dcmFile = new File(dcmFilePath);
-		this.savePath = savePath;
 		setDcmObject();
+		this.dcmFile.deleteOnExit();
 	}
 	
 	private void setDcmFile(byte[] dcmByteArray, String savePath) {
@@ -49,18 +50,31 @@ public class DicomUtils {
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
-		}	
+		}
+	}
+	
+	private void setDcmObject(byte[] dcmBytearray) {
+		try {
+			DicomInputStream dcmIS;
+			dcmIS = new DicomInputStream(new ByteArrayInputStream(dcmBytearray));
+			this.dcmObj = dcmIS.readDicomObject();
+			dcmIS.close();
+		} catch (IOException e) {
+			System.out.println("Não foi possível abrir o arquivo DICOM selecionado.");
+			e.printStackTrace();
+		}
 	}
 	
 	private void setDcmObject() {
-		DicomInputStream dcmIS;
 		try {
-			dcmIS = new DicomInputStream(this.dcmFile);
+			DicomInputStream dcmIS = new DicomInputStream(this.dcmFile);
 			this.dcmObj = dcmIS.readDicomObject();
+			dcmIS.close();
 		} catch (IOException e) {
-			System.out.println("Não é possível ler o arquivo DICOM selecionado.");
+			System.out.println("Não foi possível abrir o arquivo DICOM selecionado.");
 			e.printStackTrace();
 		}
+		
 	}
 	
 //======================================================================================================
@@ -69,10 +83,22 @@ public class DicomUtils {
 	
 	
 	//Exportação para arquivo XML
-	public void export2Xml(String savePath) {	
+	public void export2Xml(String savePath) {
+		String fileName = this.dcmObj.getString(Tag.SOPInstanceUID)+".xml";
+		export2Xml(savePath, fileName);
+	}
+	public void export2Xml(String savePath, String fileName) {	
 		try{
 			Dcm2Xml xmlFile = new Dcm2Xml();
-			xmlFile.convert(this.dcmFile, new File(savePath.concat(".xml")));
+			savePath.concat("/" + fileName);
+			savePath.replace("\\", "/");
+			savePath.replace("//", "/");
+			File xmlSaveFile = new File(savePath);
+			File xmlParentPath = new File(xmlSaveFile.getParent());
+			if(!xmlParentPath.exists()) {
+				xmlParentPath.mkdirs();
+			}
+			xmlFile.convert(this.dcmFile, xmlSaveFile);
 		}catch(IOException e) {
 			return;
 		}catch(TransformerConfigurationException e) {
@@ -82,6 +108,11 @@ public class DicomUtils {
 	
 	//Função para salvamento de imagem dicom em disco
 	public void export2Jpg(String savePath){
+		String fileName = this.dcmObj.getString(Tag.SOPInstanceUID)+".jpg";
+		export2Jpg(savePath, fileName);		
+	}
+	
+	public void export2Jpg(String savePath, String fileName){
 		try {
 			ImageIO.scanForPlugins();
 			Iterator<ImageReader> iter = ImageIO.getImageReadersByFormatName("DICOM");
@@ -98,8 +129,12 @@ public class DicomUtils {
 				System.out.println("Arquivo vazio ou inexistente.");
 				return;
 			}
-
-			File jpgImgFile = new File(this.savePath.concat(".jpg"));
+			
+			savePath.concat("/" + fileName);
+			savePath.replace("\\", "/");
+			savePath.replace("//", "/");
+			
+			File jpgImgFile = new File(savePath);
 
 			OutputStream output = new BufferedOutputStream(new FileOutputStream(jpgImgFile));
 
