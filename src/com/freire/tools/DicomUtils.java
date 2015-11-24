@@ -83,21 +83,15 @@ public class DicomUtils {
 	
 	
 	//Exportação para arquivo XML
-	public void export2Xml(String savePath) {
-		String fileName = this.dcmObj.getString(Tag.SOPInstanceUID)+".xml";
-		export2Xml(savePath, fileName);
-	}
-	public void export2Xml(String savePath, String fileName) {	
+	public void export2Xml(String savePath) {	
 		try{
 			Dcm2Xml xmlFile = new Dcm2Xml();
-			savePath.concat("/" + fileName);
-			savePath.replace("\\", "/");
-			savePath.replace("//", "/");
+			StringBuilder sb = new StringBuilder();
+			sb.append(savePath + ".xml");
+			sb.replace(sb.lastIndexOf(".xml"), sb.length(), ".xml");
+			savePath = sb.toString();
 			File xmlSaveFile = new File(savePath);
-			File xmlParentPath = new File(xmlSaveFile.getParent());
-			if(!xmlParentPath.exists()) {
-				xmlParentPath.mkdirs();
-			}
+			xmlSaveFile.getParentFile().mkdirs();
 			xmlFile.convert(this.dcmFile, xmlSaveFile);
 		}catch(IOException e) {
 			return;
@@ -106,13 +100,7 @@ public class DicomUtils {
 		}
 	}
 	
-	//Função para salvamento de imagem dicom em disco
 	public void export2Jpg(String savePath){
-		String fileName = this.dcmObj.getString(Tag.SOPInstanceUID)+".jpg";
-		export2Jpg(savePath, fileName);		
-	}
-	
-	public void export2Jpg(String savePath, String fileName){
 		try {
 			ImageIO.scanForPlugins();
 			Iterator<ImageReader> iter = ImageIO.getImageReadersByFormatName("DICOM");
@@ -130,11 +118,12 @@ public class DicomUtils {
 				return;
 			}
 			
-			savePath.concat("/" + fileName);
-			savePath.replace("\\", "/");
-			savePath.replace("//", "/");
-			
+			StringBuilder sb = new StringBuilder();
+			sb.append(savePath + ".jpg");
+			sb.replace(sb.lastIndexOf(".jpg"), sb.length(), ".jpg");
+			savePath = sb.toString();
 			File jpgImgFile = new File(savePath);
+			jpgImgFile.getParentFile().mkdirs();
 
 			OutputStream output = new BufferedOutputStream(new FileOutputStream(jpgImgFile));
 
